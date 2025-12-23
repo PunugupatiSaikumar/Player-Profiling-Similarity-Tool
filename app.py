@@ -594,7 +594,25 @@ def create_comparison_radar(players_data, feature_groups, player_names, name_col
             
             values = []
             for category, features in feature_groups.items():
-                category_values = [player_data.get(f, 0) for f in features if f in player_data.index]
+                category_values = []
+                for f in features:
+                    try:
+                        if hasattr(player_data, 'index') and f in player_data.index:
+                            val = player_data[f]
+                        elif hasattr(player_data, 'get'):
+                            val = player_data.get(f, 0)
+                        else:
+                            val = 0
+                        
+                        # Handle NaN and None values
+                        if pd.isna(val) or val is None:
+                            val = 0
+                        else:
+                            val = float(val)
+                        category_values.append(val)
+                    except (KeyError, AttributeError, TypeError, ValueError):
+                        category_values.append(0)
+                
                 if category_values:
                     values.append(np.mean(category_values))
                 else:
@@ -665,6 +683,7 @@ def create_comparison_radar(players_data, feature_groups, player_names, name_col
         )
     except Exception as e:
         # Return empty figure on error
+        st.error(f"Comparison chart error: {str(e)}")
         fig = go.Figure()
         fig.add_trace(go.Scatterpolar(
             r=[0.1, 0.1, 0.1, 0.1],
