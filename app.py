@@ -1078,7 +1078,7 @@ def main():
             try:
                 fig_radar = create_professional_radar_chart(player_data, feature_groups, selected_player)
                 if fig_radar is not None:
-                    st.plotly_chart(fig_radar, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
+                    st.plotly_chart(fig_radar, width='stretch', config={'displayModeBar': True, 'displaylogo': False})
                 else:
                     st.warning("Unable to generate radar chart for this player.")
             except Exception as e:
@@ -1117,7 +1117,7 @@ def main():
                 # Styled dataframe
                 st.dataframe(
                     similar_df.style.background_gradient(subset=['Similarity Score'], cmap='Blues'),
-                    use_container_width=True,
+                    width='stretch',
                     height=400
                 )
                 
@@ -1129,7 +1129,7 @@ def main():
                 try:
                     fig_compare = create_comparison_radar(comparison_data, feature_groups, comparison_players, name_col)
                     if fig_compare is not None:
-                        st.plotly_chart(fig_compare, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
+                        st.plotly_chart(fig_compare, width='stretch', config={'displayModeBar': True, 'displaylogo': False})
                 except Exception as e:
                     st.error(f"Error creating comparison chart: {str(e)}")
                 
@@ -1148,7 +1148,7 @@ def main():
                     if len(similarity_df) > 0:
                         fig_sim = create_similarity_chart(similarity_df)
                         if fig_sim is not None:
-                            st.plotly_chart(fig_sim, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
+                            st.plotly_chart(fig_sim, width='stretch', config={'displayModeBar': True, 'displaylogo': False})
                         else:
                             st.warning("Unable to generate similarity chart.")
                     else:
@@ -1183,7 +1183,7 @@ def main():
             try:
                 fig_comp = create_comparison_radar(comparison_data, feature_groups, selected_players, name_col)
                 if fig_comp is not None:
-                    st.plotly_chart(fig_comp, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
+                    st.plotly_chart(fig_comp, width='stretch', config={'displayModeBar': True, 'displaylogo': False})
             except Exception as e:
                 st.error(f"Error creating comparison chart: {str(e)}")
             
@@ -1199,7 +1199,7 @@ def main():
             
             st.dataframe(
                 comparison_table.style.background_gradient(axis=1, cmap='RdYlGn'),
-                use_container_width=True,
+                width='stretch',
                 height=500
             )
         else:
@@ -1287,7 +1287,7 @@ def main():
             display_df = filtered_df[display_options].copy()
             st.dataframe(
                 display_df.style.format(precision=2),
-                use_container_width=True,
+                width='stretch',
                 height=500
             )
             
