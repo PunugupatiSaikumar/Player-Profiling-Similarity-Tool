@@ -1112,17 +1112,28 @@ def main():
                 
                 # Similarity scores chart
                 st.subheader("Similarity Score Distribution")
-                similarity_df = pd.DataFrame({
-                    'Player': similar_players[name_col].values,
-                    'Similarity Score': similar_players['similarity_score'].values
-                })
-                
                 try:
-                    fig_sim = create_similarity_chart(similarity_df)
-                    if fig_sim is not None:
-                        st.plotly_chart(fig_sim, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
+                    # Create DataFrame with proper column names and data validation
+                    similarity_df = pd.DataFrame({
+                        'Player': similar_players[name_col].values,
+                        'Similarity Score': pd.to_numeric(similar_players['similarity_score'].values, errors='coerce')
+                    })
+                    
+                    # Remove any NaN values
+                    similarity_df = similarity_df.dropna()
+                    
+                    if len(similarity_df) > 0:
+                        fig_sim = create_similarity_chart(similarity_df)
+                        if fig_sim is not None:
+                            st.plotly_chart(fig_sim, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
+                        else:
+                            st.warning("Unable to generate similarity chart.")
+                    else:
+                        st.warning("No valid similarity data to display.")
                 except Exception as e:
                     st.error(f"Error creating similarity chart: {str(e)}")
+                    import traceback
+                    st.code(traceback.format_exc())
             else:
                 st.warning("No similar players found with the current filters. Try adjusting your filters.")
         except Exception as e:
