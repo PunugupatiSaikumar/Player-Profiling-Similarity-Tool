@@ -425,17 +425,47 @@ st.markdown("""
 @st.cache_data
 def load_and_process_data():
     """Load and process data with caching."""
-    # Load data
-    fbref_file = 'players_data_light-2024_2025.csv'
-    standard_file = 'player_data.csv'
-    
-    if os.path.exists(fbref_file):
-        adapter = DataAdapter()
-        df = adapter.load_and_adapt(fbref_file)
-    elif os.path.exists(standard_file):
-        df = pd.read_csv(standard_file)
-    else:
-        st.error("No data file found! Please ensure players_data_light-2024_2025.csv exists.")
+    try:
+        # Load data - try multiple possible file names and paths
+        fbref_file = 'players_data_light-2024_2025.csv'
+        standard_file = 'player_data.csv'
+        
+        df = None
+        
+        # Try to find the data file
+        if os.path.exists(fbref_file):
+            adapter = DataAdapter()
+            df = adapter.load_and_adapt(fbref_file)
+        elif os.path.exists(standard_file):
+            df = pd.read_csv(standard_file)
+        else:
+            # Try to find any CSV file in the directory
+            csv_files = [f for f in os.listdir('.') if f.endswith('.csv')]
+            if csv_files:
+                # Prefer files with 'player' or 'data' in the name
+                preferred = [f for f in csv_files if 'player' in f.lower() or 'data' in f.lower()]
+                if preferred:
+                    file_to_use = preferred[0]
+                else:
+                    file_to_use = csv_files[0]
+                
+                if 'light' in file_to_use.lower() or 'fbref' in file_to_use.lower():
+                    adapter = DataAdapter()
+                    df = adapter.load_and_adapt(file_to_use)
+                else:
+                    df = pd.read_csv(file_to_use)
+            else:
+                st.error(f"No data file found! Please ensure players_data_light-2024_2025.csv exists. Current directory: {os.getcwd()}")
+                return None, None, None, None, None
+        
+        if df is None or len(df) == 0:
+            st.error("Data file is empty or could not be loaded.")
+            return None, None, None, None, None
+            
+    except Exception as e:
+        st.error(f"Error loading data file: {str(e)}")
+        import traceback
+        st.code(traceback.format_exc())
         return None, None, None, None, None
     
     # Clean data
@@ -855,9 +885,16 @@ def main():
     
     # Load data
     with st.spinner("Loading and processing player data... This may take a moment."):
-        df_standardized, feature_names, standardized_feature_names, similarity_model, feature_engineer = load_and_process_data()
+        try:
+            df_standardized, feature_names, standardized_feature_names, similarity_model, feature_engineer = load_and_process_data()
+        except Exception as e:
+            st.error(f"Critical error loading data: {str(e)}")
+            import traceback
+            st.code(traceback.format_exc())
+            st.stop()
     
     if df_standardized is None:
+        st.error("Failed to load data. Please check that the data file exists and is accessible.")
         st.stop()
     
     # Sidebar with professional styling
