@@ -1,0 +1,995 @@
+"""
+Professional Streamlit Web Application
+Player Profiling & Similarity Tool - Enterprise-Grade Web Interface
+"""
+
+import streamlit as st
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+import plotly.express as px
+from feature_engineering import FeatureEngineer
+from preprocessing import FeatureStandardizer, DataPreprocessor
+from similarity import PlayerSimilarity
+from data_adapter import DataAdapter
+import os
+
+# Page configuration
+st.set_page_config(
+    page_title="Player Profiling & Similarity Analytics",
+    page_icon=None,
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': "Player Profiling & Similarity Tool - Professional Analytics Platform"
+    }
+)
+
+# Professional CSS Styling
+st.markdown("""
+    <style>
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
+    /* Global Styles */
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    /* Remove top spacing */
+    .main .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 2rem;
+    }
+    
+    [data-testid="stAppViewContainer"] {
+        padding-top: 0rem !important;
+    }
+    
+    /* Main Header */
+    .main-header {
+        font-size: 3.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-align: center;
+        margin-top: 0 !important;
+        margin-bottom: 0.5rem;
+        padding-top: 0 !important;
+        letter-spacing: -0.02em;
+    }
+    
+    .sub-header {
+        text-align: center;
+        color: #64748b;
+        font-size: 1.1rem;
+        font-weight: 400;
+        margin-top: 0 !important;
+        margin-bottom: 2rem;
+        padding-top: 0 !important;
+        letter-spacing: 0.01em;
+    }
+    
+    /* Sidebar Styling */
+    .css-1d391kg {
+        background-color: #f8fafc;
+    }
+    
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-right: 1px solid #e2e8f0;
+    }
+    
+    [data-testid="stSidebar"] .css-1d391kg {
+        padding-top: 1rem;
+    }
+    
+    /* Metric Cards */
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.5rem;
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+    
+    .metric-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-top: 0.5rem;
+    }
+    
+    /* Tab Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: #f8fafc;
+        padding: 8px;
+        border-radius: 8px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    /* Button Styling */
+    .stButton > button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* Selectbox Styling */
+    .stSelectbox label {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 0.95rem;
+    }
+    
+    /* Slider Styling */
+    .stSlider label {
+        font-weight: 600;
+        color: #1e293b;
+    }
+    
+    /* Dataframe Styling */
+    .dataframe {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    /* Section Headers */
+    h2 {
+        color: #1e293b;
+        font-weight: 700;
+        font-size: 1.75rem;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        border-bottom: 3px solid #667eea;
+        padding-bottom: 0.5rem;
+    }
+    
+    h3 {
+        color: #334155;
+        font-weight: 600;
+        font-size: 1.25rem;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Info Boxes */
+    .info-box {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin: 1rem 0;
+    }
+    
+    /* Success/Info Messages */
+    .stSuccess {
+        border-radius: 8px;
+    }
+    
+    /* Hide Streamlit Branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Hide Streamlit auto-generated link emojis and icons */
+    .stMarkdown a[href]::before,
+    .stText a[href]::before,
+    a[href]::before,
+    .stMarkdown a::before,
+    .stText a::before {
+        content: none !important;
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    /* Hide any link icons/images that Streamlit adds */
+    .stMarkdown a[href] img,
+    .stMarkdown a[href] svg,
+    .stText a[href] img,
+    .stText a[href] svg,
+    img[alt*="link"],
+    img[alt*="🔗"],
+    svg[aria-label*="link"] {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    
+    /* Remove emoji from auto-detected links */
+    .stMarkdown a,
+    .stText a {
+        text-decoration: none;
+    }
+    
+    /* Specifically hide link emoji character (🔗) */
+    .stMarkdown a[href]::after,
+    .stText a[href]::after,
+    a[href]::after {
+        content: none !important;
+        display: none !important;
+    }
+    
+    /* Hide any span elements containing link emojis */
+    .stMarkdown span:has(> a[href]),
+    .stText span:has(> a[href]) {
+        display: inline !important;
+    }
+    
+    /* Target specific Streamlit link emoji elements */
+    [data-testid="stMarkdownContainer"] a[href]::before,
+    [data-testid="stText"] a[href]::before {
+        display: none !important;
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+    
+    /* Loading Spinner */
+    .stSpinner > div {
+        border-top-color: #667eea;
+    }
+    
+    </style>
+""", unsafe_allow_html=True)
+
+@st.cache_data
+def load_and_process_data():
+    """Load and process data with caching."""
+    # Load data
+    fbref_file = 'players_data_light-2024_2025.csv'
+    standard_file = 'player_data.csv'
+    
+    if os.path.exists(fbref_file):
+        adapter = DataAdapter()
+        df = adapter.load_and_adapt(fbref_file)
+    elif os.path.exists(standard_file):
+        df = pd.read_csv(standard_file)
+    else:
+        st.error("No data file found! Please ensure players_data_light-2024_2025.csv exists.")
+        return None, None, None, None, None
+    
+    # Clean data
+    preprocessor = DataPreprocessor()
+    df_clean = preprocessor.clean_data(df)
+    
+    # Engineer features
+    feature_engineer = FeatureEngineer()
+    df_features = feature_engineer.engineer_all_features(df_clean)
+    feature_names = feature_engineer.get_feature_names()
+    
+    # Standardize features
+    standardizer = FeatureStandardizer(method='standard')
+    df_standardized = standardizer.fit_transform(df_features, feature_names)
+    standardized_feature_names = standardizer.get_standardized_feature_names()
+    
+    # Fit similarity model
+    similarity_model = PlayerSimilarity(metric='cosine')
+    similarity_model.fit(df_standardized, standardized_feature_names)
+    
+    return df_standardized, feature_names, standardized_feature_names, similarity_model, feature_engineer
+
+def create_professional_radar_chart(player_data, feature_groups, player_name):
+    """Create a professional radar chart using Plotly."""
+    try:
+        categories = list(feature_groups.keys())
+        values = []
+        
+        for category, features in feature_groups.items():
+            category_values = [player_data.get(f, 0) for f in features if f in player_data.index]
+            if category_values:
+                values.append(np.mean(category_values))
+            else:
+                values.append(0)
+        
+        # Ensure we have valid values
+        if not values or all(v == 0 for v in values):
+            values = [0.1] * len(categories)  # Default small values to show chart
+        
+        # Normalize values for better visualization
+        max_val = max(values) if values else 1
+        values_normalized = [v / max_val if max_val > 0 else 0.1 for v in values]
+        
+        # Complete the circle
+        values_normalized += values_normalized[:1]
+        categories_plot = categories + [categories[0]]
+        
+        fig = go.Figure()
+        
+        fig.add_trace(go.Scatterpolar(
+            r=values_normalized,
+            theta=categories_plot,
+            fill='toself',
+            name=str(player_name),
+            line=dict(color='#667eea', width=3),
+            fillcolor='rgba(102, 126, 234, 0.2)',
+            marker=dict(size=8, color='#667eea', symbol='circle')
+        ))
+        
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    range=[0, 1],
+                    tickfont=dict(size=11, color='#64748b'),
+                    gridcolor='#e2e8f0',
+                    linecolor='#cbd5e1'
+                ),
+                angularaxis=dict(
+                    tickfont=dict(size=12, color='#1e293b'),
+                    linecolor='#cbd5e1',
+                    rotation=90
+                ),
+                bgcolor='rgba(248, 250, 252, 0.5)'
+            ),
+            showlegend=True,
+            title=dict(
+                text=f"<b>{str(player_name)}</b> - Performance Profile",
+                font=dict(size=20, color='#1e293b', family='Inter'),
+                x=0.5,
+                xanchor='center'
+            ),
+            font=dict(family='Inter', size=12),
+            height=500,
+            paper_bgcolor='white',
+            plot_bgcolor='white',
+            margin=dict(t=80, b=50, l=50, r=50)
+        )
+    except Exception as e:
+        # Return a simple empty figure if there's an error
+        fig = go.Figure()
+        fig.add_trace(go.Scatterpolar(
+            r=[0.1, 0.1, 0.1, 0.1], 
+            theta=['Error', 'Error', 'Error', 'Error'],
+            fill='toself',
+            name='Error'
+        ))
+        fig.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
+            title="Error loading chart",
+            height=500
+        )
+    
+    return fig
+
+def create_comparison_radar(players_data, feature_groups, player_names, name_col='player_name'):
+    """Create professional comparison radar chart."""
+    try:
+        if players_data is None or len(players_data) == 0:
+            raise ValueError("Empty players data")
+        
+        if not player_names or len(player_names) == 0:
+            raise ValueError("No player names provided")
+        
+        categories = list(feature_groups.keys())
+        categories_plot = categories + [categories[0]]
+        
+        fig = go.Figure()
+        
+        colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe', '#43e97b', '#fa709a', '#fee140']
+        
+        for idx, player_name in enumerate(player_names):
+            player_row = players_data[players_data[name_col] == player_name]
+            if len(player_row) == 0:
+                continue
+            
+            player_data = player_row.iloc[0]
+            
+            values = []
+            for category, features in feature_groups.items():
+                category_values = [player_data.get(f, 0) for f in features if f in player_data.index]
+                if category_values:
+                    values.append(np.mean(category_values))
+                else:
+                    values.append(0)
+            
+            # Ensure we have valid values
+            if not values or all(v == 0 for v in values):
+                values = [0.1] * len(categories)
+            
+            # Normalize
+            max_val = max(values) if values else 1
+            values_normalized = [v / max_val if max_val > 0 else 0.1 for v in values]
+            values_normalized += values_normalized[:1]
+            
+            # Convert color to rgba safely
+            try:
+                rgb = px.colors.hex_to_rgb(colors[idx % len(colors)])
+                rgba_color = f'rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.15)'
+            except:
+                rgba_color = 'rgba(102, 126, 234, 0.15)'
+            
+            fig.add_trace(go.Scatterpolar(
+                r=values_normalized,
+                theta=categories_plot,
+                fill='toself',
+                name=str(player_name),
+                line=dict(color=colors[idx % len(colors)], width=2.5),
+                fillcolor=rgba_color,
+                marker=dict(size=6, color=colors[idx % len(colors)])
+            ))
+        
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    range=[0, 1],
+                    tickfont=dict(size=10, color='#64748b'),
+                    gridcolor='#e2e8f0',
+                    linecolor='#cbd5e1'
+                ),
+                angularaxis=dict(
+                    tickfont=dict(size=11, color='#1e293b'),
+                    linecolor='#cbd5e1',
+                    rotation=90
+                ),
+                bgcolor='rgba(248, 250, 252, 0.5)'
+            ),
+            showlegend=True,
+            legend=dict(
+                orientation="v",
+                yanchor="top",
+                y=1,
+                xanchor="left",
+                x=1.15,
+                font=dict(size=11, color='#1e293b')
+            ),
+            title=dict(
+                text="<b>Multi-Player Performance Comparison</b>",
+                font=dict(size=18, color='#1e293b', family='Inter'),
+                x=0.5,
+                xanchor='center'
+            ),
+            font=dict(family='Inter', size=12),
+            height=600,
+            paper_bgcolor='white',
+            plot_bgcolor='white',
+            margin=dict(t=80, b=50, l=50, r=150)
+        )
+    except Exception as e:
+        # Return empty figure on error
+        fig = go.Figure()
+        fig.add_trace(go.Scatterpolar(
+            r=[0.1, 0.1, 0.1, 0.1],
+            theta=['Error', 'Error', 'Error', 'Error'],
+            fill='toself',
+            name='Error'
+        ))
+        fig.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
+            title="Error loading chart",
+            height=600
+        )
+    
+    return fig
+
+def create_feature_bar_chart(feature_df, player_name):
+    """Create professional feature bar chart."""
+    try:
+        if feature_df is None or len(feature_df) == 0:
+            raise ValueError("Empty dataframe")
+        
+        fig = px.bar(
+            feature_df,
+            x='Value',
+            y='Feature',
+            orientation='h',
+            color='Value',
+            color_continuous_scale='Viridis',
+            title=f"<b>{str(player_name)}</b> - Top Performance Features",
+            labels={'Value': 'Feature Value', 'Feature': ''},
+            height=500
+        )
+        
+        fig.update_layout(
+            font=dict(family='Inter', size=12, color='#1e293b'),
+            title_font=dict(size=18, color='#1e293b', family='Inter'),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            yaxis={'categoryorder': 'total ascending', 'title': ''},
+            xaxis={'title': 'Normalized Feature Value', 'titlefont': dict(size=13)},
+            coloraxis_showscale=True,
+            coloraxis_colorbar=dict(
+                title="Value",
+                titlefont=dict(size=11),
+                tickfont=dict(size=10)
+            ),
+            margin=dict(t=60, b=50, l=50, r=50)
+        )
+        
+        fig.update_traces(
+            marker_line_color='white',
+            marker_line_width=1,
+            hovertemplate='<b>%{y}</b><br>Value: %{x:.3f}<extra></extra>'
+        )
+    except Exception as e:
+        # Return empty figure on error
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=[0], y=['Error'], name='Error'))
+        fig.update_layout(title="Error loading chart", height=500)
+    
+    return fig
+
+def create_similarity_chart(similarity_df):
+    """Create professional similarity score chart."""
+    try:
+        if similarity_df is None or len(similarity_df) == 0:
+            raise ValueError("Empty dataframe")
+        
+        fig = px.bar(
+            similarity_df,
+            x='Similarity Score',
+            y='Player',
+            orientation='h',
+            color='Similarity Score',
+            color_continuous_scale='Blues',
+            title="<b>Similarity Score Analysis</b>",
+            labels={'Similarity Score': 'Similarity Score', 'Player': ''},
+            height=400
+        )
+    
+        fig.update_layout(
+            font=dict(family='Inter', size=12, color='#1e293b'),
+            title_font=dict(size=16, color='#1e293b', family='Inter'),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            yaxis={'categoryorder': 'total ascending', 'title': ''},
+            xaxis={'title': 'Similarity Score (0-1)', 'titlefont': dict(size=13), 'range': [0, 1]},
+            coloraxis_showscale=True,
+            coloraxis_colorbar=dict(
+                title="Score",
+                titlefont=dict(size=11),
+                tickfont=dict(size=10)
+            ),
+            margin=dict(t=60, b=50, l=50, r=50)
+        )
+        
+        fig.update_traces(
+            marker_line_color='white',
+            marker_line_width=1.5,
+            hovertemplate='<b>%{y}</b><br>Similarity: %{x:.4f}<extra></extra>'
+        )
+    except Exception as e:
+        # Return empty figure on error
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=[0], y=['Error'], name='Error'))
+        fig.update_layout(title="Error loading chart", height=400)
+    
+    return fig
+
+def main():
+    """Main application function."""
+    # Header
+    st.markdown('<h1 class="main-header">Player Profiling & Similarity Analytics</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Professional Football Analytics Platform | Advanced Player Comparison &amp; Scouting Tool</p>', unsafe_allow_html=True)
+    
+    # Load data
+    with st.spinner("Loading and processing player data... This may take a moment."):
+        df_standardized, feature_names, standardized_feature_names, similarity_model, feature_engineer = load_and_process_data()
+    
+    if df_standardized is None:
+        st.stop()
+    
+    # Sidebar with professional styling
+    with st.sidebar:
+        st.markdown("### Control Panel")
+        st.markdown("---")
+        
+        # Get player list
+        name_col = 'player_name' if 'player_name' in df_standardized.columns else 'name'
+        players_list = sorted(df_standardized[name_col].unique())
+        
+        # Player selection with search
+        st.markdown("#### Player Selection")
+        selected_player = st.selectbox(
+            "Choose Player",
+            players_list,
+            index=0,
+            help="Select a player to analyze"
+        )
+        
+        st.markdown("---")
+        
+        # Filters
+        st.markdown("#### Filters")
+        
+        if 'position' in df_standardized.columns:
+            positions = ['All Positions'] + sorted(df_standardized['position'].unique().tolist())
+            selected_position = st.selectbox("Position Filter", positions, help="Filter by player position")
+        else:
+            selected_position = 'All Positions'
+        
+        st.markdown("---")
+        
+        # Analysis Settings
+        st.markdown("#### Analysis Settings")
+        
+        n_similar = st.slider(
+            "Number of Similar Players",
+            3, 10, 5,
+            help="Adjust how many similar players to display"
+        )
+        
+        st.markdown("---")
+        
+        # Statistics
+        st.markdown("#### Dataset Statistics")
+        st.metric("Total Players", f"{len(df_standardized):,}")
+        if 'position' in df_standardized.columns:
+            st.metric("Positions", df_standardized['position'].nunique())
+        if 'team' in df_standardized.columns:
+            st.metric("Teams", df_standardized['team'].nunique())
+    
+    # Main content tabs
+    tab1, tab2, tab3, tab4 = st.tabs(["Player Profile", "Similar Players", "Comparison", "Data Explorer"])
+    
+    # Feature groups for visualization
+    feature_groups = {
+        'Defensive Actions': [
+            'tackles_p90', 'interceptions_p90', 'blocks_p90',
+            'defensive_duels_won_p90', 'pressures_p90'
+        ],
+        'Progressive Passing': [
+            'progressive_passes_p90', 'passes_into_final_third_p90',
+            'key_passes_p90', 'progressive_pass_accuracy'
+        ],
+        'Expected Threat': [
+            'xt_from_passes_p90', 'xt_from_carries_p90',
+            'total_xt_p90', 'xt_contribution_rate'
+        ],
+        'Chance Creation': [
+            'assists_p90', 'expected_assists_p90',
+            'shot_creating_actions_p90', 'chances_created_p90'
+        ]
+    }
+    
+    # Tab 1: Player Profile
+    with tab1:
+        st.header(f"Player Profile Analysis")
+        
+        # Get player data
+        player_data = df_standardized[df_standardized[name_col] == selected_player]
+        if len(player_data) > 0:
+            player_data = player_data.iloc[0]
+            
+            # Professional metric cards
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.markdown(f"""
+                    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                padding: 1.5rem; border-radius: 12px; color: white; 
+                                box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                        <div style='font-size: 0.875rem; opacity: 0.9; text-transform: uppercase; 
+                                    letter-spacing: 0.05em;'>Position</div>
+                        <div style='font-size: 2rem; font-weight: 700; margin-top: 0.5rem;'>
+                            {player_data.get('position', 'N/A')}
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown(f"""
+                    <div style='background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+                                padding: 1.5rem; border-radius: 12px; color: white; 
+                                box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                        <div style='font-size: 0.875rem; opacity: 0.9; text-transform: uppercase; 
+                                    letter-spacing: 0.05em;'>Minutes Played</div>
+                        <div style='font-size: 2rem; font-weight: 700; margin-top: 0.5rem;'>
+                            {int(player_data.get('minutes_played', 0)):,}
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown(f"""
+                    <div style='background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+                                padding: 1.5rem; border-radius: 12px; color: white; 
+                                box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                        <div style='font-size: 0.875rem; opacity: 0.9; text-transform: uppercase; 
+                                    letter-spacing: 0.05em;'>Team</div>
+                        <div style='font-size: 1.5rem; font-weight: 700; margin-top: 0.5rem;'>
+                            {str(player_data.get('team', 'N/A'))[:15]}
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            with col4:
+                age_val = int(player_data.get('age', 0)) if pd.notna(player_data.get('age')) else 'N/A'
+                st.markdown(f"""
+                    <div style='background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); 
+                                padding: 1.5rem; border-radius: 12px; color: white; 
+                                box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                        <div style='font-size: 0.875rem; opacity: 0.9; text-transform: uppercase; 
+                                    letter-spacing: 0.05em;'>Age</div>
+                        <div style='font-size: 2rem; font-weight: 700; margin-top: 0.5rem;'>
+                            {age_val}
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Radar chart
+            st.subheader("Performance Profile Radar")
+            try:
+                fig_radar = create_professional_radar_chart(player_data, feature_groups, selected_player)
+                if fig_radar is not None:
+                    st.plotly_chart(fig_radar, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
+                else:
+                    st.warning("Unable to generate radar chart for this player.")
+            except Exception as e:
+                st.error(f"Error creating radar chart: {str(e)}")
+            
+            # Top features
+            st.subheader("Top Performance Features")
+            feature_values = {f: player_data.get(f, 0) for f in feature_names if f in player_data.index}
+            sorted_features = sorted(feature_values.items(), key=lambda x: abs(x[1]), reverse=True)[:15]
+            
+            feature_df = pd.DataFrame(sorted_features, columns=['Feature', 'Value'])
+            feature_df['Feature'] = feature_df['Feature'].str.replace('_', ' ').str.title()
+            
+            try:
+                fig_bar = create_feature_bar_chart(feature_df, selected_player)
+                if fig_bar is not None:
+                    st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
+            except Exception as e:
+                st.error(f"Error creating feature chart: {str(e)}")
+        else:
+            st.error(f"Player '{selected_player}' not found in dataset.")
+    
+    # Tab 2: Similar Players
+    with tab2:
+        st.header(f"Similar Players Analysis")
+        st.markdown(f"Finding players similar to **{selected_player}**...")
+        
+        try:
+            # Find similar players
+            role_filter = None if selected_position == 'All Positions' else selected_position
+            similar_players = similarity_model.find_similar_players(
+                df_standardized,
+                selected_player,
+                n_similar=n_similar,
+                exclude_self=True,
+                role_filter=role_filter
+            )
+            
+            if len(similar_players) > 0:
+                # Display similar players table with styling
+                st.subheader("Similar Players Table")
+                display_cols = [name_col, 'position', 'team', 'similarity_score']
+                if 'minutes_played' in similar_players.columns:
+                    display_cols.insert(-1, 'minutes_played')
+                
+                similar_df = similar_players[display_cols].copy()
+                similar_df['similarity_score'] = similar_df['similarity_score'].round(4)
+                similar_df.columns = [col.replace('_', ' ').title() for col in similar_df.columns]
+                
+                # Styled dataframe
+                st.dataframe(
+                    similar_df.style.background_gradient(subset=['Similarity Score'], cmap='Blues'),
+                    use_container_width=True,
+                    height=400
+                )
+                
+                # Comparison radar chart
+                st.subheader("Profile Comparison")
+                comparison_players = [selected_player] + similar_players[name_col].head(5).tolist()
+                comparison_data = df_standardized[df_standardized[name_col].isin(comparison_players)]
+                
+                try:
+                    fig_compare = create_comparison_radar(comparison_data, feature_groups, comparison_players, name_col)
+                    if fig_compare is not None:
+                        st.plotly_chart(fig_compare, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
+                except Exception as e:
+                    st.error(f"Error creating comparison chart: {str(e)}")
+                
+                # Similarity scores chart
+                st.subheader("Similarity Score Distribution")
+                similarity_df = pd.DataFrame({
+                    'Player': similar_players[name_col].values,
+                    'Similarity Score': similar_players['similarity_score'].values
+                })
+                
+                try:
+                    fig_sim = create_similarity_chart(similarity_df)
+                    if fig_sim is not None:
+                        st.plotly_chart(fig_sim, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
+                except Exception as e:
+                    st.error(f"Error creating similarity chart: {str(e)}")
+            else:
+                st.warning("No similar players found with the current filters. Try adjusting your filters.")
+        except Exception as e:
+            st.error(f"Error finding similar players: {str(e)}")
+    
+    # Tab 3: Comparison
+    with tab3:
+        st.header("Multi-Player Comparison")
+        st.markdown("Compare multiple players side-by-side to analyze performance differences.")
+        
+        # Multi-select players
+        selected_players = st.multiselect(
+            "Select Players to Compare",
+            players_list,
+            default=[selected_player] if selected_player in players_list else [],
+            help="Select 2-6 players for best comparison results"
+        )
+        
+        if len(selected_players) > 0:
+            comparison_data = df_standardized[df_standardized[name_col].isin(selected_players)]
+            
+            # Comparison radar
+            st.subheader("Performance Profile Comparison")
+            try:
+                fig_comp = create_comparison_radar(comparison_data, feature_groups, selected_players, name_col)
+                if fig_comp is not None:
+                    st.plotly_chart(fig_comp, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
+            except Exception as e:
+                st.error(f"Error creating comparison chart: {str(e)}")
+            
+            # Feature comparison table
+            st.subheader("Detailed Feature Comparison")
+            comparison_features = []
+            for category, features in feature_groups.items():
+                comparison_features.extend(features)
+            
+            comparison_table = comparison_data[[name_col] + [f for f in comparison_features if f in comparison_data.columns]]
+            comparison_table = comparison_table.set_index(name_col).T
+            comparison_table.index = comparison_table.index.str.replace('_', ' ').str.title()
+            
+            st.dataframe(
+                comparison_table.style.background_gradient(axis=1, cmap='RdYlGn'),
+                use_container_width=True,
+                height=500
+            )
+        else:
+            st.info("Select at least one player to compare.")
+    
+    # Tab 4: Data Explorer
+    with tab4:
+        st.header("Data Explorer")
+        st.markdown("Browse and filter the complete player database.")
+        
+        # Filter options
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if 'position' in df_standardized.columns:
+                filter_position = st.multiselect(
+                    "Filter by Position",
+                    df_standardized['position'].unique(),
+                    default=[],
+                    help="Select positions to filter"
+                )
+            else:
+                filter_position = []
+        
+        with col2:
+            if 'team' in df_standardized.columns:
+                filter_team = st.multiselect(
+                    "Filter by Team",
+                    sorted(df_standardized['team'].unique()),
+                    default=[],
+                    help="Select teams to filter"
+                )
+            else:
+                filter_team = []
+        
+        with col3:
+            min_minutes = int(df_standardized['minutes_played'].min()) if 'minutes_played' in df_standardized.columns else 0
+            max_minutes = int(df_standardized['minutes_played'].max()) if 'minutes_played' in df_standardized.columns else 1000
+            minutes_range = st.slider(
+                "Minutes Played Range",
+                min_minutes, max_minutes,
+                (min_minutes, max_minutes),
+                help="Filter by playing time"
+            )
+        
+        # Apply filters
+        filtered_df = df_standardized.copy()
+        if filter_position:
+            filtered_df = filtered_df[filtered_df['position'].isin(filter_position)]
+        if filter_team:
+            filtered_df = filtered_df[filtered_df['team'].isin(filter_team)]
+        if 'minutes_played' in filtered_df.columns:
+            filtered_df = filtered_df[
+                (filtered_df['minutes_played'] >= minutes_range[0]) &
+                (filtered_df['minutes_played'] <= minutes_range[1])
+            ]
+        
+        # Statistics
+        st.subheader("Filtered Dataset Statistics")
+        stat_col1, stat_col2, stat_col3, stat_col4 = st.columns(4)
+        with stat_col1:
+            st.metric("Total Players", f"{len(df_standardized):,}")
+        with stat_col2:
+            st.metric("Filtered Players", f"{len(filtered_df):,}")
+        with stat_col3:
+            if 'position' in df_standardized.columns:
+                st.metric("Positions", df_standardized['position'].nunique())
+        with stat_col4:
+            if 'team' in df_standardized.columns:
+                st.metric("Teams", df_standardized['team'].nunique())
+        
+        # Display data
+        st.subheader("Player Data Table")
+        
+        # Select columns to display
+        default_cols = [name_col, 'position', 'team', 'minutes_played']
+        available_cols = [col for col in filtered_df.columns if col not in standardized_feature_names]
+        
+        display_options = st.multiselect(
+            "Select columns to display",
+            available_cols,
+            default=default_cols if all(c in available_cols for c in default_cols) else available_cols[:5]
+        )
+        
+        if display_options:
+            display_df = filtered_df[display_options].copy()
+            st.dataframe(
+                display_df.style.format(precision=2),
+                use_container_width=True,
+                height=500
+            )
+            
+            # Download button
+            csv = display_df.to_csv(index=False)
+            st.download_button(
+                label="📥 Download Filtered Data as CSV",
+                data=csv,
+                file_name=f"filtered_players_{len(filtered_df)}.csv",
+                mime="text/csv"
+            )
+        else:
+            st.info("Select columns to display the data table.")
+
+if __name__ == "__main__":
+    main()
