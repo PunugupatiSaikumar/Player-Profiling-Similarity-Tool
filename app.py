@@ -1137,32 +1137,6 @@ def main():
                         st.plotly_chart(fig_compare, width='stretch', config=plotly_config)
                 except Exception as e:
                     st.error(f"Error creating comparison chart: {str(e)}")
-                
-                # Similarity scores chart
-                st.subheader("Similarity Score Distribution")
-                try:
-                    # Create DataFrame with proper column names and data validation
-                    similarity_df = pd.DataFrame({
-                        'Player': similar_players[name_col].values,
-                        'Similarity Score': pd.to_numeric(similar_players['similarity_score'].values, errors='coerce')
-                    })
-                    
-                    # Remove any NaN values
-                    similarity_df = similarity_df.dropna()
-                    
-                    if len(similarity_df) > 0:
-                        fig_sim = create_similarity_chart(similarity_df)
-                        if fig_sim is not None:
-                            plotly_config = {'displayModeBar': True, 'displaylogo': False}
-                            st.plotly_chart(fig_sim, width='stretch', config=plotly_config)
-                        else:
-                            st.warning("Unable to generate similarity chart.")
-                    else:
-                        st.warning("No valid similarity data to display.")
-                except Exception as e:
-                    st.error(f"Error creating similarity chart: {str(e)}")
-                    import traceback
-                    st.code(traceback.format_exc())
             else:
                 st.warning("No similar players found with the current filters. Try adjusting your filters.")
         except Exception as e:
