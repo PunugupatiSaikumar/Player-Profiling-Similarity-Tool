@@ -752,8 +752,58 @@ def create_similarity_chart(similarity_df):
         if similarity_df is None or len(similarity_df) == 0:
             raise ValueError("Empty dataframe")
         
+        # Ensure we have the right column names (handle case variations)
+        df = similarity_df.copy()
+        
+        # Normalize column names
+        column_map = {}
+        for col in df.columns:
+            col_lower = col.lower().replace(' ', '_')
+            if 'similarity' in col_lower and 'score' in col_lower:
+                column_map[col] = 'Similarity Score'
+            elif 'player' in col_lower:
+                column_map[col] = 'Player'
+        
+        if column_map:
+            df = df.rename(columns=column_map)
+        
+        # Ensure required columns exist
+        if 'Similarity Score' not in df.columns:
+            # Try to find similarity column
+            sim_cols = [c for c in df.columns if 'similarity' in c.lower() or 'score' in c.lower()]
+            if sim_cols:
+                df = df.rename(columns={sim_cols[0]: 'Similarity Score'})
+            else:
+                raise ValueError("Similarity Score column not found")
+        
+        if 'Player' not in df.columns:
+            # Try to find player column
+            player_cols = [c for c in df.columns if 'player' in c.lower() or 'name' in c.lower()]
+            if player_cols:
+                df = df.rename(columns={player_cols[0]: 'Player'})
+            else:
+                raise ValueError("Player column not found")
+        
+        # Clean data - handle NaN and invalid values
+        df = df[['Player', 'Similarity Score']].copy()
+        df = df.dropna()
+        
+        # Ensure similarity scores are numeric
+        df['Similarity Score'] = pd.to_numeric(df['Similarity Score'], errors='coerce')
+        df = df.dropna()
+        
+        # Ensure scores are in valid range
+        df['Similarity Score'] = df['Similarity Score'].clip(0, 1)
+        
+        # Sort by similarity score
+        df = df.sort_values('Similarity Score', ascending=True)
+        
+        if len(df) == 0:
+            raise ValueError("No valid data after cleaning")
+        
+        # Create chart
         fig = px.bar(
-            similarity_df,
+            df,
             x='Similarity Score',
             y='Player',
             orientation='h',
@@ -761,7 +811,7 @@ def create_similarity_chart(similarity_df):
             color_continuous_scale='Blues',
             title="<b>Similarity Score Analysis</b>",
             labels={'Similarity Score': 'Similarity Score', 'Player': ''},
-            height=400
+            height=max(400, len(df) * 40)  # Dynamic height based on number of players
         )
     
         fig.update_layout(
@@ -786,10 +836,11 @@ def create_similarity_chart(similarity_df):
             hovertemplate='<b>%{y}</b><br>Similarity: %{x:.4f}<extra></extra>'
         )
     except Exception as e:
-        # Return empty figure on error
+        # Return empty figure on error with better error message
+        st.error(f"Similarity chart error: {str(e)}")
         fig = go.Figure()
         fig.add_trace(go.Bar(x=[0], y=['Error'], name='Error'))
-        fig.update_layout(title="Error loading chart", height=400)
+        fig.update_layout(title=f"Error loading chart: {str(e)}", height=400)
     
     return fig
 
