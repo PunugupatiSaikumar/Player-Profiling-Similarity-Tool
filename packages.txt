@@ -1,0 +1,10 @@
+# Alternative requirements file with more flexible versions
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+scipy
+streamlit
+plotly
+
