@@ -8,11 +8,11 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
+import os
 from feature_engineering import FeatureEngineer
 from preprocessing import FeatureStandardizer, DataPreprocessor
 from similarity import PlayerSimilarity
 from data_adapter import DataAdapter
-import os
 
 # Page configuration
 st.set_page_config(
@@ -38,21 +38,40 @@ st.markdown("""
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
-    /* Remove top spacing */
+    /* Football-themed Background */
+    .stApp {
+        background: #ffffff;
+        min-height: 100vh;
+    }
+    
     .main .block-container {
-        padding-top: 1rem !important;
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 20px;
+        padding: 2rem !important;
         padding-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.3);
+        margin-top: 1rem;
+        margin-bottom: 2rem;
+        border: 2px solid rgba(255, 255, 255, 0.5);
     }
     
     [data-testid="stAppViewContainer"] {
         padding-top: 0rem !important;
+        background: #ffffff;
     }
     
-    /* Main Header */
+    /* Sidebar with football theme */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #ffffff 0%, #f0f8f4 100%) !important;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+        border-right: 3px solid #1a5f2e;
+    }
+    
+    /* Football-themed Header */
     .main-header {
         font-size: 3.5rem;
         font-weight: 800;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1a5f2e 0%, #2d8650 50%, #ffd700 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -61,41 +80,47 @@ st.markdown("""
         margin-bottom: 0.5rem;
         padding-top: 0 !important;
         letter-spacing: -0.02em;
+        text-shadow: 0 4px 20px rgba(26, 95, 46, 0.3);
+        animation: fadeInDown 0.6s ease-out;
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     .sub-header {
         text-align: center;
-        color: #64748b;
+        color: #1a5f2e;
         font-size: 1.1rem;
-        font-weight: 400;
+        font-weight: 600;
         margin-top: 0 !important;
         margin-bottom: 2rem;
         padding-top: 0 !important;
         letter-spacing: 0.01em;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 248, 244, 0.95) 100%);
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        display: inline-block;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border: 2px solid #1a5f2e;
     }
     
-    /* Sidebar Styling */
-    .css-1d391kg {
-        background-color: #f8fafc;
-    }
-    
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-        border-right: 1px solid #e2e8f0;
-    }
-    
-    [data-testid="stSidebar"] .css-1d391kg {
-        padding-top: 1rem;
-    }
-    
-    /* Metric Cards */
+    /* Football-themed Metric Cards */
     .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1a5f2e 0%, #2d8650 100%);
         padding: 1.5rem;
         border-radius: 12px;
         color: white;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
         margin-bottom: 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.2);
     }
     
     .metric-label {
@@ -112,31 +137,43 @@ st.markdown("""
         margin-top: 0.5rem;
     }
     
-    /* Tab Styling */
+    /* Football-themed Tab Styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
-        background-color: #f8fafc;
-        padding: 8px;
-        border-radius: 8px;
+        background: linear-gradient(135deg, #f0f8f4 0%, #e8f5eb 100%);
+        padding: 10px;
+        border-radius: 12px;
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+        border: 2px solid #1a5f2e;
     }
     
     .stTabs [data-baseweb="tab"] {
-        border-radius: 8px;
-        padding: 12px 24px;
+        border-radius: 10px;
+        padding: 14px 28px;
         font-weight: 600;
         transition: all 0.3s ease;
+        border: 2px solid transparent;
+        color: #1a5f2e;
+    }
+    
+    .stTabs [data-baseweb="tab"]:hover {
+        background: rgba(26, 95, 46, 0.1);
+        transform: translateY(-2px);
+        border-color: #1a5f2e;
     }
     
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1a5f2e 0%, #2d8650 100%);
         color: white;
+        box-shadow: 0 4px 12px rgba(26, 95, 46, 0.4);
+        border: 2px solid rgba(255, 255, 255, 0.3);
     }
     
-    /* Button Styling */
+    /* Football-themed Button Styling */
     .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1a5f2e 0%, #2d8650 100%);
         color: white;
-        border: none;
+        border: 2px solid rgba(255, 255, 255, 0.3);
         border-radius: 8px;
         padding: 0.5rem 1.5rem;
         font-weight: 600;
@@ -145,14 +182,41 @@ st.markdown("""
     
     .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 4px 12px rgba(26, 95, 46, 0.5);
+        background: linear-gradient(135deg, #2d8650 0%, #1a5f2e 100%);
     }
     
-    /* Selectbox Styling */
-    .stSelectbox label {
+    /* Enhanced Selectbox and Input Styling */
+    .stSelectbox label,
+    .stTextInput label {
         font-weight: 600;
         color: #1e293b;
         font-size: 0.95rem;
+    }
+    
+    .stTextInput > div > div > input {
+        border-radius: 10px;
+        border: 2px solid #e2e8f0;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stTextInput > div > div > input:focus {
+        border-color: #1a5f2e;
+        box-shadow: 0 0 0 3px rgba(26, 95, 46, 0.1);
+        outline: none;
+    }
+    
+    .stSelectbox > div > div {
+        border-radius: 10px;
+        border: 2px solid #1a5f2e;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .stSelectbox > div > div:hover {
+        border-color: #2d8650;
+        box-shadow: 0 2px 8px rgba(26, 95, 46, 0.15);
     }
     
     /* Slider Styling */
@@ -161,38 +225,113 @@ st.markdown("""
         color: #1e293b;
     }
     
-    /* Dataframe Styling */
+    /* Enhanced Dataframe Styling */
     .dataframe {
-        border-radius: 8px;
+        border-radius: 12px;
         overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
     }
     
-    /* Section Headers */
+    /* Metric cards enhancement */
+    [data-testid="stMetricValue"] {
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        color: #1e293b !important;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b !important;
+    }
+    
+    [data-testid="stMetricContainer"] {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+    
+    [data-testid="stMetricContainer"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(26, 95, 46, 0.15);
+        border-color: #1a5f2e;
+    }
+    
+    /* Warning and info boxes */
+    .stAlert {
+        border-radius: 12px;
+        border-left: 4px solid;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Football-themed Slider */
+    .stSlider {
+        padding: 1rem 0;
+    }
+    
+    .stSlider > div > div {
+        background: linear-gradient(90deg, #1a5f2e 0%, #2d8650 100%);
+    }
+    
+    /* Chart containers */
+    .js-plotly-plot {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        background: white;
+        padding: 1rem;
+    }
+    
+    /* Football-themed Section Headers */
     h2 {
-        color: #1e293b;
+        color: #1a5f2e;
         font-weight: 700;
         font-size: 1.75rem;
         margin-top: 2rem;
         margin-bottom: 1rem;
-        border-bottom: 3px solid #667eea;
+        background: linear-gradient(135deg, #1a5f2e 0%, #2d8650 50%, #ffd700 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
         padding-bottom: 0.5rem;
+        border-bottom: 3px solid #1a5f2e;
+        position: relative;
+    }
+    
+    h2::after {
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(90deg, #1a5f2e 0%, #ffd700 100%);
+        border-radius: 2px;
     }
     
     h3 {
-        color: #334155;
+        color: #1a5f2e;
         font-weight: 600;
         font-size: 1.25rem;
         margin-top: 1.5rem;
         margin-bottom: 0.75rem;
+        padding-left: 0.75rem;
+        border-left: 4px solid #1a5f2e;
     }
     
-    /* Info Boxes */
+    /* Football-themed Info Boxes */
     .info-box {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        border-left: 4px solid #667eea;
+        background: linear-gradient(135deg, #f0f8f4 0%, #e8f5eb 100%);
+        border-left: 4px solid #1a5f2e;
         padding: 1rem 1.5rem;
         border-radius: 8px;
         margin: 1rem 0;
+        border: 1px solid rgba(26, 95, 46, 0.2);
     }
     
     /* Success/Info Messages */
@@ -275,9 +414,9 @@ st.markdown("""
         background: #94a3b8;
     }
     
-    /* Loading Spinner */
+    /* Football-themed Loading Spinner */
     .stSpinner > div {
-        border-top-color: #667eea;
+        border-top-color: #1a5f2e;
     }
     
     </style>
@@ -351,9 +490,9 @@ def create_professional_radar_chart(player_data, feature_groups, player_name):
             theta=categories_plot,
             fill='toself',
             name=str(player_name),
-            line=dict(color='#667eea', width=3),
-            fillcolor='rgba(102, 126, 234, 0.2)',
-            marker=dict(size=8, color='#667eea', symbol='circle')
+            line=dict(color='#1a5f2e', width=3),
+            fillcolor='rgba(26, 95, 46, 0.2)',
+            marker=dict(size=8, color='#1a5f2e', symbol='circle')
         ))
         
         fig.update_layout(
@@ -416,7 +555,7 @@ def create_comparison_radar(players_data, feature_groups, player_names, name_col
         
         fig = go.Figure()
         
-        colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe', '#43e97b', '#fa709a', '#fee140']
+        colors = ['#1a5f2e', '#2d8650', '#ffd700', '#0066cc', '#ff6b35', '#43e97b', '#ffa500', '#c41e3a']
         
         for idx, player_name in enumerate(player_names):
             player_row = players_data[players_data[name_col] == player_name]
@@ -613,6 +752,9 @@ def main():
     st.markdown('<h1 class="main-header">Player Profiling & Similarity Analytics</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Professional Football Analytics Platform | Advanced Player Comparison &amp; Scouting Tool</p>', unsafe_allow_html=True)
     
+    # Alternative: Full-width banner image above header
+    st.markdown("---")
+    
     # Load data
     with st.spinner("Loading and processing player data... This may take a moment."):
         df_standardized, feature_names, standardized_feature_names, similarity_model, feature_engineer = load_and_process_data()
@@ -629,25 +771,62 @@ def main():
         name_col = 'player_name' if 'player_name' in df_standardized.columns else 'name'
         players_list = sorted(df_standardized[name_col].unique())
         
-        # Player selection with search
+        # Initialize session state for selected player
+        if 'selected_player' not in st.session_state:
+            st.session_state.selected_player = players_list[0] if len(players_list) > 0 else None
+        
+        # Position filter - filter players by position before selection
         st.markdown("#### Player Selection")
-        selected_player = st.selectbox(
-            "Choose Player",
-            players_list,
-            index=0,
-            help="Select a player to analyze"
-        )
+        
+        if 'position' in df_standardized.columns:
+            # Get unique positions
+            unique_positions = sorted(df_standardized['position'].dropna().unique().tolist())
+            positions = ['All Positions'] + unique_positions
+            
+            # Position filter dropdown
+            selected_position = st.selectbox(
+                "Filter by Position",
+                positions,
+                help="Filter players by their position/role",
+                key="position_filter"
+            )
+            
+            # Filter players based on selected position
+            if selected_position != 'All Positions':
+                filtered_df = df_standardized[df_standardized['position'] == selected_position]
+                filtered_players_list = sorted(filtered_df[name_col].unique().tolist())
+                st.info(f"Showing {len(filtered_players_list)} {selected_position} player(s)")
+            else:
+                filtered_players_list = players_list
+        else:
+            selected_position = 'All Positions'
+            filtered_players_list = players_list
         
         st.markdown("---")
         
-        # Filters
-        st.markdown("#### Filters")
-        
-        if 'position' in df_standardized.columns:
-            positions = ['All Positions'] + sorted(df_standardized['position'].unique().tolist())
-            selected_position = st.selectbox("Position Filter", positions, help="Filter by player position")
+        # Player selection dropdown with filtered list
+        if len(filtered_players_list) > 0:
+            # Find index of previously selected player in filtered list
+            try:
+                if st.session_state.selected_player in filtered_players_list:
+                    default_idx = filtered_players_list.index(st.session_state.selected_player)
+                else:
+                    default_idx = 0
+            except:
+                default_idx = 0
+            
+            # Selectbox with built-in search - click and type to search
+            selected_player = st.selectbox(
+                "Choose Player",
+                filtered_players_list,
+                index=min(default_idx, len(filtered_players_list) - 1),
+                help=f"Click to open dropdown and type to search. {len(filtered_players_list)} player(s) available.",
+                key="player_selectbox"
+            )
+            st.session_state.selected_player = selected_player
         else:
-            selected_position = 'All Positions'
+            st.warning(f"No players found for position: {selected_position}")
+            selected_player = None
         
         st.markdown("---")
         
@@ -706,9 +885,9 @@ def main():
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 st.markdown(f"""
-                    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    <div style='background: linear-gradient(135deg, #1a5f2e 0%, #2d8650 100%); 
                                 padding: 1.5rem; border-radius: 12px; color: white; 
-                                box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                                box-shadow: 0 4px 6px rgba(0,0,0,0.15); border: 2px solid rgba(255,255,255,0.2);'>
                         <div style='font-size: 0.875rem; opacity: 0.9; text-transform: uppercase; 
                                     letter-spacing: 0.05em;'>Position</div>
                         <div style='font-size: 2rem; font-weight: 700; margin-top: 0.5rem;'>
@@ -719,9 +898,9 @@ def main():
             
             with col2:
                 st.markdown(f"""
-                    <div style='background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
-                                padding: 1.5rem; border-radius: 12px; color: white; 
-                                box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                    <div style='background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); 
+                                padding: 1.5rem; border-radius: 12px; color: #1a5f2e; 
+                                box-shadow: 0 4px 6px rgba(0,0,0,0.15); border: 2px solid rgba(26,95,46,0.3);'>
                         <div style='font-size: 0.875rem; opacity: 0.9; text-transform: uppercase; 
                                     letter-spacing: 0.05em;'>Minutes Played</div>
                         <div style='font-size: 2rem; font-weight: 700; margin-top: 0.5rem;'>
@@ -732,9 +911,9 @@ def main():
             
             with col3:
                 st.markdown(f"""
-                    <div style='background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+                    <div style='background: linear-gradient(135deg, #0066cc 0%, #004d99 100%); 
                                 padding: 1.5rem; border-radius: 12px; color: white; 
-                                box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                                box-shadow: 0 4px 6px rgba(0,0,0,0.15); border: 2px solid rgba(255,255,255,0.2);'>
                         <div style='font-size: 0.875rem; opacity: 0.9; text-transform: uppercase; 
                                     letter-spacing: 0.05em;'>Team</div>
                         <div style='font-size: 1.5rem; font-weight: 700; margin-top: 0.5rem;'>
@@ -746,9 +925,9 @@ def main():
             with col4:
                 age_val = int(player_data.get('age', 0)) if pd.notna(player_data.get('age')) else 'N/A'
                 st.markdown(f"""
-                    <div style='background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); 
+                    <div style='background: linear-gradient(135deg, #2d8650 0%, #1a5f2e 100%); 
                                 padding: 1.5rem; border-radius: 12px; color: white; 
-                                box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                                box-shadow: 0 4px 6px rgba(0,0,0,0.15); border: 2px solid rgba(255,255,255,0.2);'>
                         <div style='font-size: 0.875rem; opacity: 0.9; text-transform: uppercase; 
                                     letter-spacing: 0.05em;'>Age</div>
                         <div style='font-size: 2rem; font-weight: 700; margin-top: 0.5rem;'>

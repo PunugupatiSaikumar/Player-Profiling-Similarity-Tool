@@ -1,5 +1,17 @@
 # Player Profiling & Similarity Tool
 
+> **Quick Summary**: Professional web-based football analytics platform using Python, Streamlit, and scikit-learn to analyze player performance and find similar players through advanced metrics and machine learning.
+
+## Quick Overview
+- **Web App**: Streamlit-based interactive dashboard
+- **ML Engine**: scikit-learn for similarity computation
+- **Features**: 27+ engineered metrics (defensive, passing, xT, chance creation)
+- **Visualization**: Plotly interactive charts
+- **Data**: Supports FBref/StatsBomb format CSV files
+- **Output**: Player profiles, similarity scores, comparison charts
+
+---
+
 A comprehensive Python tool for analyzing football players using advanced metrics and machine learning techniques. This tool engineers player-level features, standardizes them for comparison, computes similarity scores using scikit-learn, and creates intuitive visualizations for non-technical staff.
 
 ## Features
