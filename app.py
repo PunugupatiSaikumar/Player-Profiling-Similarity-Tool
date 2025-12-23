@@ -846,11 +846,15 @@ def create_similarity_chart(similarity_df):
     
         fig.update_layout(
             font=dict(family='Inter', size=12, color='#1e293b'),
-            title_font=dict(size=16, color='#1e293b', family='Inter'),
+            title=dict(font=dict(size=16, color='#1e293b', family='Inter')),
             plot_bgcolor='white',
             paper_bgcolor='white',
             yaxis={'categoryorder': 'total ascending', 'title': ''},
-            xaxis={'title': 'Similarity Score (0-1)', 'titlefont': dict(size=13), 'range': [0, 1]},
+            xaxis={
+                'title': 'Similarity Score (0-1)', 
+                'title': dict(font=dict(size=13)),
+                'range': [0, 1]
+            },
             coloraxis_showscale=True,
             coloraxis_colorbar=dict(
                 title="Score",
