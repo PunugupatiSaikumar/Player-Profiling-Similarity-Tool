@@ -851,8 +851,7 @@ def create_similarity_chart(similarity_df):
             paper_bgcolor='white',
             yaxis={'categoryorder': 'total ascending', 'title': ''},
             xaxis={
-                'title': 'Similarity Score (0-1)', 
-                'title': dict(font=dict(size=13)),
+                'title': dict(text='Similarity Score (0-1)', font=dict(size=13)),
                 'range': [0, 1]
             },
             coloraxis_showscale=True,
