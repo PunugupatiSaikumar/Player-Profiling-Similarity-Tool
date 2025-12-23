@@ -1047,20 +1047,6 @@ def main():
             except Exception as e:
                 st.error(f"Error creating radar chart: {str(e)}")
             
-            # Top features
-            st.subheader("Top Performance Features")
-            feature_values = {f: player_data.get(f, 0) for f in feature_names if f in player_data.index}
-            sorted_features = sorted(feature_values.items(), key=lambda x: abs(x[1]), reverse=True)[:15]
-            
-            feature_df = pd.DataFrame(sorted_features, columns=['Feature', 'Value'])
-            feature_df['Feature'] = feature_df['Feature'].str.replace('_', ' ').str.title()
-            
-            try:
-                fig_bar = create_feature_bar_chart(feature_df, selected_player)
-                if fig_bar is not None:
-                    st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False})
-            except Exception as e:
-                st.error(f"Error creating feature chart: {str(e)}")
         else:
             st.error(f"Player '{selected_player}' not found in dataset.")
     
